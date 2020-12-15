@@ -1,27 +1,27 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 
 pub struct MemoryGame {
     turn: usize,
-    seen: HashMap<i64, usize>,
-    last_spoken: Option<i64>,
-    next_spoken: Option<i64>,
-    starting_numbers: VecDeque<i64>,
+    seen: Vec<Option<usize>>,
+    last_spoken: Option<usize>,
+    next_spoken: Option<usize>,
+    starting_numbers: VecDeque<usize>,
 }
 
 impl MemoryGame {
-    pub fn new(starting_numbers: &[i64]) -> MemoryGame {
+    pub fn new(starting_numbers: &[usize]) -> MemoryGame {
         let turn = 0;
-        let seen = HashMap::new();
-        let last_seen = None;
+        let seen = vec![None; 1 << 25];
+        let last_spoken = None;
         let next_spoken = None;
         let starting_numbers = starting_numbers
             .iter()
             .map(|s| *s)
-            .collect::<VecDeque<i64>>();
+            .collect::<VecDeque<usize>>();
         MemoryGame {
             turn,
             seen,
-            last_spoken: last_seen,
+            last_spoken,
             next_spoken,
             starting_numbers,
         }
@@ -29,7 +29,7 @@ impl MemoryGame {
 }
 
 impl Iterator for MemoryGame {
-    type Item = i64;
+    type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
         match (self.last_spoken, self.starting_numbers.pop_front()) {
@@ -39,15 +39,16 @@ impl Iterator for MemoryGame {
             }
             (Some(last_spoken), Some(starting_number)) => {
                 self.next_spoken = Some(starting_number);
-                self.seen.insert(last_spoken, self.turn);
+
+                self.seen[last_spoken] = Some(self.turn);
             }
             (Some(last_spoken), None) => {
-                if let Some(prev_turn) = self.seen.get(&last_spoken) {
-                    self.next_spoken = Some((self.turn - prev_turn) as i64);
+                if let Some(prev_turn) = self.seen[last_spoken] {
+                    self.next_spoken = Some(self.turn - prev_turn);
                 } else {
                     self.next_spoken = Some(0);
                 }
-                self.seen.insert(last_spoken, self.turn);
+                self.seen[last_spoken] = Some(self.turn);
             }
         }
 
