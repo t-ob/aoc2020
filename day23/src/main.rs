@@ -1,6 +1,6 @@
 use std::io::{self, Read};
 
-fn play(values: &Vec<usize>, rounds: usize) -> Vec<usize> {
+fn play(values: &[usize], rounds: usize) -> Vec<usize> {
     let max_val = values.iter().max().unwrap();
 
     let mut next_cups = vec![0; *max_val + 1];
@@ -73,7 +73,7 @@ fn main() -> io::Result<()> {
     );
 
     // Part 2
-    let mut vals_part_2 = vals_part_1.clone();
+    let mut vals_part_2 = vals_part_1;
     for x in 10..=1000000 {
         vals_part_2.push(x);
     }
@@ -87,7 +87,7 @@ fn main() -> io::Result<()> {
             .skip_while(|x| **x != 1)
             .skip(1)
             .take(2)
-            .fold(1, |a, x| a * x)
+            .product::<usize>()
     );
 
     Ok(())
