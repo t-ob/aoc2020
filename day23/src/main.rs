@@ -3,59 +3,46 @@ use std::io::{self, Read};
 fn play(values: &Vec<usize>, rounds: usize) -> Vec<usize> {
     let max_val = values.iter().max().unwrap();
 
-    let mut linked_cups = values
-        .iter()
-        .enumerate()
-        .map(|(idx, x)| (*x, (idx + 1) % max_val))
-        .collect::<Vec<_>>();
-
-    let mut lookup = vec![0; *max_val + 1];
-    for (idx, val) in values.iter().enumerate() {
-        lookup[*val] = idx;
+    let mut next_cups = vec![0; *max_val + 1];
+    for (val, next_val) in values.iter().cycle().zip(values.iter().cycle().skip(1)).take(values.len()) {
+        next_cups[*val] = *next_val
     }
 
-    let mut turn = 0;
-    let mut idx = 0;
-    while turn < rounds {
-        let cup = linked_cups[idx];
+    let mut round = 0;
+    let mut cup = values[0];
+    while round < rounds {
+        let next_cup_1 = next_cups[cup];
+        let next_cup_2 = next_cups[next_cup_1];
+        let next_cup_3 = next_cups[next_cup_2];
 
-        let next_cup_1 = linked_cups[cup.1];
-        let next_cup_2 = linked_cups[next_cup_1.1];
-        let next_cup_3 = linked_cups[next_cup_2.1];
-
-        let cup_val = cup.0;
-
-        let mut dest_val = cup_val - 1;
-        if dest_val == 0 {
-            dest_val = *max_val;
+        let mut dest_cup = cup - 1;
+        if dest_cup == 0 {
+            dest_cup = *max_val;
         }
 
-        while dest_val == next_cup_1.0 || dest_val == next_cup_2.0 || dest_val == next_cup_3.0 {
-            dest_val -= 1;
-            if dest_val == 0 {
-                dest_val = *max_val;
+        while dest_cup == next_cup_1 || dest_cup == next_cup_2 || dest_cup == next_cup_3 {
+            dest_cup -= 1;
+            if dest_cup == 0 {
+                dest_cup = *max_val;
             }
         }
 
-        let dest_cup = linked_cups[lookup[dest_val]];
+        let next_round_cup = next_cups[next_cup_3];
 
-        let next_val = next_cup_3.1;
+        next_cups[next_cup_3] = next_cups[dest_cup];
+        next_cups[dest_cup] = next_cups[cup];
+        next_cups[cup] = next_round_cup;
 
-        linked_cups[lookup[next_cup_3.0]].1 = dest_cup.1;
-        linked_cups[lookup[dest_cup.0]].1 = cup.1;
-        linked_cups[lookup[cup.0]].1 = next_val;
-
-        idx = next_val;
-        turn += 1;
+        cup = next_round_cup;
+        round += 1;
     }
 
     let mut result = Vec::new();
 
-    let mut idx = 0;
+    let mut cup = values[0];
     while result.len() < values.len() {
-        let cup = linked_cups[idx];
-        result.push(cup.0);
-        idx = cup.1;
+        result.push(cup);
+        cup = next_cups[cup];
     }
 
     result
